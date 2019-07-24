@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from MineSweeper import game
+from MineSweeperAI import game
 
 def test_initGame():
 	""" Make sure we are able to init a game"""
