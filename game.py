@@ -16,6 +16,7 @@ class minesweeper:
         self.height = height
         self.bombs = bombs
         self.record = record
+        self.isFrist = True
         self.gameRecord = {}
         self.gameboard = None
         self.visible = [["?" for i in range(width)] for j in range(height)]
@@ -64,10 +65,16 @@ class minesweeper:
     def num_bombs(self):
         return np.sum(self.board == 9)
 
+    def firstClick(self, coordinate):
+        while self.board[coordinate] != 0:
+            self.init_board()
+
     def clickCell(self, coordinate):
+        if (self.isFrist):
+            self.firstClick(coordinate)
+            self.isFrist = False
         if (self.record):
             self.gameRecord[time.time() - self.startTime] = coordinate
-        print(coordinate)
         x, y = coordinate
         if self.visible[x][y] != "?":
             pass
@@ -81,9 +88,12 @@ class minesweeper:
             self.loseGame()
 
     def clickCellCallback(self, button):
+        coordinate = eval(button.tooltip)
+        if (self.isFrist):
+            self.firstClick(coordinate)
+            self.isFrist = False
         if (self.record):
             self.gameRecord[time.time() - self.startTime] = coordinate
-        coordinate = eval(button.tooltip)
         x, y = coordinate
         if self.visible[x][y] != "?":
             pass
@@ -92,14 +102,16 @@ class minesweeper:
             button.description = ""
             button.disabled = True
             for cell in self.getSurroundingSquares(coordinate):
-                print(cell)
                 self.gameboard[cell[0]][cell[1]].click()
         elif self.board[coordinate] != 9:
             self.visible[x][y] = str(self.board[coordinate])
             button.description = str(self.board[coordinate])
             button.disabled = True
         else:
+            self.visible[x][y] = str(self.board[coordinate])
+            button.description = str(self.board[coordinate])
             self.loseGame()
+            button.style.button_color = "#F77"
             #clear_output()
             display(self.visible)
         if sum([sum([c == "?" for c in row]) for row in self.visible]) == self.bombs:
@@ -118,8 +130,9 @@ class minesweeper:
 
     def loseGame(self):
         if self.gameboard:
-            for row in self.gameboard:
-                for btn in row:
+            for i, row in enumerate(self.gameboard):
+                for j, btn in enumerate(row):
+                    btn.description = str(self.board[(i, j)])
                     btn.disabled = True
         self.score = 10000
         self.visible = "You have lost"
@@ -133,6 +146,7 @@ class minesweeper:
             for c in row:
                 print(c, "\t", end="")
             print("\n")
+
     def flag(self, coordinate):
         x, y = coordinate
         self.visible[x][y] = "X"
@@ -169,3 +183,13 @@ class minesweeper:
         else:
             clear_output()
             display(self.visible)
+
+    def solvePercent(self, percent):
+        while sum([f=="?" for f in sum(self.visible, [])])/(self.width * self.height) > percent:
+            randRow = np.random.randint(self.height)
+            randCol = np.random.randint(self.width)
+            coordinate = (randRow, randCol)
+            if self.board[coordinate] != 9:
+                self.clickCell(coordinate)
+            else:
+                self.visible[randRow][randCol] = 9.0
